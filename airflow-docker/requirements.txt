@@ -1,0 +1,9 @@
+# Procesamiento de datos y scraping
+pandas
+lxml
+beautifulsoup4
+html5lib
+
+# Conectividad con Bases de Datos
+apache-airflow-providers-postgres
+psycopg2-binary
