@@ -17,13 +17,13 @@ beautifulsoup4==4.12.2
 lxml==4.9.3
 html5lib==1.1
 
-# PDF processing
+# PDF
 pdfplumber==0.10.3
 
-# Data processing
-pandas==2.2.2
-numpy==1.24.3
+# Data (🔥 versiones compatibles)
+pandas==2.1.4
+numpy==1.26.4
 
-# Utilities
+# Utils
 gunicorn==21.2.0
 python-dotenv==1.0.0
