@@ -1,5 +1,0 @@
-{
-  "name": "Airflow Cloud",
-  "build": { "dockerfile": "../Dockerfile" },
-  "remoteUser": "airflow"
-}
