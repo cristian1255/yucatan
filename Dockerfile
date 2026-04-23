@@ -5,5 +5,4 @@ WORKDIR /opt/project
 COPY . /opt/project
 
 RUN pip install --no-cache-dir pandas requests beautifulsoup4 lxml psycopg2-binary
-
-CMD ["python", "viales_estrella_pipeline.py"]
+CMD ["python", "airflow-docker/dags/pipelines/viales_estrella_pipeline.py"]
