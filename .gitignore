@@ -1,0 +1,55 @@
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.installed.cfg
+*.egg
+venv/
+env/
+ENV/
+.Python
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Airflow
+logs/
+airflow.db
+airflow-webserver.pid
+unittests.cfg
+
+# Data
+data/
+*.csv
+*.xlsx
+*.json
+
+# Tests
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# OS
+.DS_Store
+Thumbs.db
+*.log
+
+# Docker
+postgres-db-volume/
+redis-data/
+
+# Misc
+.python-version
+*.pid

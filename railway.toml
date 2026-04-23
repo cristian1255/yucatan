@@ -1,0 +1,25 @@
+[build]
+builder = "dockerfile"
+
+[deploy]
+startCommand = "airflow db init && airflow webserver --port $PORT"
+
+[[services]]
+name = "airflow-webserver"
+internal_port = 8080
+public_port = 8080
+protocol = "http"
+
+[[services]]
+name = "airflow-scheduler"
+startCommand = "airflow scheduler"
+
+[[services]]
+name = "airflow-worker"
+startCommand = "airflow celery worker"
+
+[env]
+AIRFLOW_HOME = "/opt/airflow"
+AIRFLOW__CORE__LOAD_EXAMPLES = "False"
+AIRFLOW__CORE__EXECUTOR = "CeleryExecutor"
+PYTHONUNBUFFERED = "1"
