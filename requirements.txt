@@ -5,7 +5,7 @@ apache-airflow-providers-redis==3.4.0
 
 # Celery
 celery[redis]==5.3.4
-redis==5.0.1
+redis==4.6.0
 
 # Database
 psycopg2-binary==2.9.9
