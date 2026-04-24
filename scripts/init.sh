@@ -4,7 +4,7 @@ set -e
 
 echo "Inicializando Airflow..."
 
-# DB (usa migrate en vez de init)
+# IMPORTANTE: usar migrate
 airflow db migrate
 
 # Crear usuario
@@ -16,9 +16,7 @@ airflow users create \
   --role Admin || true
 
 # Iniciar scheduler en background
-echo "Iniciando scheduler..."
 airflow scheduler &
 
 # Iniciar webserver
-echo "Iniciando webserver..."
 exec airflow webserver --port $PORT --hostname 0.0.0.0
