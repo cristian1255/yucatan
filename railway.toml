@@ -2,8 +2,8 @@
 builder = "dockerfile"
 
 [deploy]
-# Ejecuta el script de inicio y luego mantiene el servidor encendido
-startCommand = "bash /opt/airflow/scripts/init.sh && airflow webserver --port $PORT"
+# El ';' asegura que el webserver arranque aunque el init tire un aviso
+startCommand = "bash /opt/airflow/scripts/init.sh ; airflow webserver --port $PORT"
 
 [[services]]
 name = "yucatan-web"
