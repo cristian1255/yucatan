@@ -1,7 +1,7 @@
 [build]
 builder = "dockerfile"
 
-[dep[deploy]
+[deploy]
 startCommand = "bash ./scripts/init.sh && airflow webserver --port $PORT"
 
 [[services]]
