@@ -1,7 +1,7 @@
 [build]
 builder = "dockerfile"
 
-[deploy]
+[dep[deploy]
 startCommand = "bash ./scripts/init.sh && airflow webserver --port $PORT"
 
 [[services]]
@@ -18,8 +18,3 @@ startCommand = "airflow scheduler"
 name = "yucatan-worker"
 startCommand = "airflow celery worker"
 
-[env]
-AIRFLOW_HOME = "/opt/airflow"
-AIRFLOW__CORE__LOAD_EXAMPLES = "False"
-AIRFLOW__CORE__EXECUTOR = "CeleryExecutor"
-PYTHONUNBUFFERED = "1"
