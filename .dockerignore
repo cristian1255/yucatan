@@ -1,27 +1,45 @@
+# Git
 .git
 .gitignore
+
+# Entornos y Secretos (CRÍTICO: No subir .env a la imagen)
 .env
 .env.*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.Python
+
+# Airflow (Archivos locales que Railway no debe usar)
 logs/
-__pycache__
-*.pyc
-*.pyo
-.pytest_cache/
+airflow.db
+airflow-webserver.pid
+unittests.cfg
+
+# Datos Locales (Para que no pesen en el despliegue)
+data/
+*.csv
+*.xlsx
+*.json
+
+# IDEs y Editores
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
 .DS_Store
-venv/
-env/
+
+# Tests y Cobertura
+.pytest_cache/
 .coverage
 htmlcov/
-data/
-*.csv
-*.xlsx
 tests/
-README.md
-.github/
-*.md
-.devcontainer/
+
+# Docker Local
+postgres-db-volume/
+redis-data/
