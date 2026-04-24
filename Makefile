@@ -1,31 +1,4 @@
-.PHONY: help build up down logs init test lint clean
-
-help:
-	@echo "Comandos disponibles:"
-	@echo "  make build      - Build de Docker image"
-	@echo "  make up         - Levantar servicios (docker-compose)"
-	@echo "  make down       - Bajar servicios"
-	@echo "  make logs       - Ver logs"
-	@echo "  make init       - Inicializar Airflow"
-	@echo "  make test       - Validar DAGs"
-	@echo "  make lint       - Linting del código"
-	@echo "  make clean      - Limpiar archivos generados"
-
-build:
-	docker build -t airflow-cloud:latest .
-
-up:
-	docker-compose up -d
-	@echo "✅ Airflow está corriendo en http://localhost:8080"
-
-down:
-	docker-compose down
-
-logs:
-	docker-compose logs -f airflow-scheduler
-
-init:
-	docker-compose exec airflow-webserver bash /opt/airflow/scripts/init.sh
+.PHONY: test lint clean
 
 test:
 	python -m py_compile dags/dag_principal.py
