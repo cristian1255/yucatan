@@ -37,7 +37,7 @@ services:
       AIRFLOW__CORE__LOAD_EXAMPLES: "false"
       _AIRFLOW_WWW_USER_USERNAME: airflow
       _AIRFLOW_WWW_USER_PASSWORD: airflow
-    command: db init
+    entrypoint: /opt/airflow/init.sh
     depends_on:
       postgres:
         condition: service_healthy
