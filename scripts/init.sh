@@ -1,20 +1,16 @@
 #!/bin/bash
 set -e
 
+echo "1. Migrando base de datos..."
 airflow db migrate
 
+echo "2. Creando usuario admin..."
 airflow users create \
-  --username "${_AIRFLOW_WWW_USER_USERNAME:-airflow}" \
-  --password "${_AIRFLOW_WWW_USER_PASSWORD:-airflow}" \
-  --firstname Admin \
-  --lastname User \
-  --role Admin || echo "Usuario ya existe"
+  --username "admin" \
+  --password "admin" \
+  --firstname "Admin" \
+  --lastname "User" \
+  --role "Admin" \
+  --email "admin@example.org" || echo "El usuario ya existe"
 
-airflow connections add 'postgres_default' \
-  --conn-type 'postgres' \
-  --conn-login "${POSTGRES_USER:-airflow}" \
-  --conn-password "${POSTGRES_PASSWORD:-airflow}" \
-  --conn-host 'postgres.railway.internal' \
-  --conn-port '5432' \
-  --conn-schema "${POSTGRES_DB:-airflow}" \
-  2>/dev/null || echo "Conexión ya existe"
+echo "✅ Inicialización completada"
