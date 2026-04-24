@@ -40,4 +40,5 @@ echo "  URL: http://localhost:8080"
 echo "  Usuario: admin"
 echo "  Contraseña: admin"
 echo ""
+exec airflow webserver --host 0.0.0.0 --port $PORT
 
