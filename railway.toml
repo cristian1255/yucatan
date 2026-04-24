@@ -17,3 +17,9 @@ startCommand = "airflow scheduler"
 [[services]]
 name = "yucatan-worker"
 startCommand = "airflow celery worker"
+
+[env]
+AIRFLOW_HOME = "/opt/airflow"
+AIRFLOW__CORE__LOAD_EXAMPLES = "False"
+AIRFLOW__CORE__EXECUTOR = "CeleryExecutor"
+PYTHONUNBUFFERED = "1"
