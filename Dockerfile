@@ -13,7 +13,7 @@ COPY dags /opt/airflow/dags
 COPY config /opt/airflow/config
 
 ENV AIRFLOW_HOME=/opt/airflow
-ENV AIRFLOW__CORE__EXECUTOR=CeleryExecutor
+ENV AIRFLOW__CORE__EXECUTOR=SequentialExecutor
 ENV AIRFLOW__CORE__LOAD_EXAMPLES=False
 ENV PYTHONUNBUFFERED=1
 
