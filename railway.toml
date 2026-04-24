@@ -2,24 +2,29 @@
 builder = "dockerfile"
 
 [deploy]
-startCommand = "airflow db init && airflow webserver --port $PORT"
+# Ejecuta el script de inicio y luego mantiene el servidor encendido
+startCommand = "bash /opt/airflow/scripts/init.sh && airflow webserver --port $PORT"
 
 [[services]]
-name = "airflow-webserver"
+name = "yucatan-web"
 internal_port = 8080
 public_port = 8080
 protocol = "http"
+healthcheckPath = "/health"
+healthcheckTimeout = 100
 
 [[services]]
-name = "airflow-scheduler"
+name = "yucatan-scheduler"
 startCommand = "airflow scheduler"
 
 [[services]]
-name = "airflow-worker"
+name = "yucatan-worker"
 startCommand = "airflow celery worker"
 
 [env]
 AIRFLOW_HOME = "/opt/airflow"
 AIRFLOW__CORE__LOAD_EXAMPLES = "False"
 AIRFLOW__CORE__EXECUTOR = "CeleryExecutor"
+# LLAVE FERNET CRITICA (DEBE SER 32 BYTES BASE64)
+AIRFLOW__CORE__FERNET_KEY = "7X7lR9-5X-W2u8W8x9X_Y7z6W5v4U3t2S1R0PqOnMlKj="
 PYTHONUNBUFFERED = "1"
