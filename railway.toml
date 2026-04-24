@@ -2,24 +2,18 @@
 builder = "dockerfile"
 
 [deploy]
-startCommand = "airflow db init && airflow webserver --port $PORT"
+startCommand = "/opt/airflow/scripts/init.sh && airflow webserver --port $PORT"
 
 [[services]]
-name = "airflow-webserver"
+name = "yucatan-web"
 internal_port = 8080
 public_port = 8080
 protocol = "http"
 
 [[services]]
-name = "airflow-scheduler"
+name = "yucatan-scheduler"
 startCommand = "airflow scheduler"
 
 [[services]]
-name = "airflow-worker"
+name = "yucatan-worker"
 startCommand = "airflow celery worker"
-
-[env]
-AIRFLOW_HOME = "/opt/airflow"
-AIRFLOW__CORE__LOAD_EXAMPLES = "False"
-AIRFLOW__CORE__EXECUTOR = "CeleryExecutor"
-PYTHONUNBUFFERED = "1"
