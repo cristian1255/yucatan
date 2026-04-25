@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.providers.postgres.operators.postgres import PostgresOperator
@@ -10,7 +10,9 @@ from pipelines.viales_estrella_pipeline import run_viales_pipeline
 default_args = {
     "owner": "Cristian",
     "start_date": datetime(2026, 3, 20),
-    "retries": 0
+    "retries": 2,                           # Aumentamos reintentos por si falla la red de la SCT
+    "retry_delay": timedelta(minutes=5),    # Tiempo de espera entre reintentos
+    "depends_on_past": False,
 }
 
 def ejecutar_ciclo_viales(**kwargs):
@@ -28,9 +30,11 @@ def ejecutar_ciclo_viales(**kwargs):
 
 with DAG(
     dag_id="sct_viales_estrella_automatizado",
-    schedule_interval=None,
+    # CAMBIO CRÍTICO: "0 0 * * *" ejecuta el proceso todos los días a media noche
+    schedule_interval="0 0 * * *", 
     catchup=False,
-    default_args=default_args
+    default_args=default_args,
+    tags=["produccion", "sct_yucatan"] # Etiquetas para identificarlo en la UI
 ) as dag:
 
     crear_tablas = PostgresOperator(
@@ -70,10 +74,10 @@ with DAG(
         """
     )
 
-    # NUEVA TAREA: Ejecuta el Crawler + La Transformación/Carga de todos los años
     proceso_etl_completo = PythonOperator(
         task_id="ejecutar_scraper_y_carga",
-        python_callable=ejecutar_ciclo_viales
+        python_callable=ejecutar_ciclo_viales,
+        provide_context=True # Recomendado para pasar parámetros del sistema
     )
 
     crear_tablas >> proceso_etl_completo
