@@ -30,6 +30,17 @@ airflow connections add 'postgres_default' \
   --conn-password "${POSTGRES_PASSWORD}" || echo "⚠️ La conexión ya existe o faltan variables."
 
 echo "=========================================="
-echo "✅ Todo listo. Arrancando servidor..."
+echo "✅ Todo listo. Arrancando componente..."
 echo "=========================================="
-exec airflow webserver --port $PORT
+
+# Detectar el componente a ejecutar.
+# Prioridad 1: variable explícita AIRFLOW_COMPONENT ("webserver" | "scheduler")
+# Prioridad 2: RAILWAY_SERVICE_NAME (si contiene "scheduler" → scheduler)
+# Por defecto: webserver
+if [ "${AIRFLOW_COMPONENT}" = "scheduler" ] || echo "${RAILWAY_SERVICE_NAME}" | grep -qi "scheduler"; then
+  echo "🗓️  Modo SCHEDULER detectado. Ejecutando airflow scheduler..."
+  exec airflow scheduler
+else
+  echo "🌐 Modo WEBSERVER detectado. Ejecutando airflow webserver --port $PORT..."
+  exec airflow webserver --port $PORT
+fi
