@@ -32,3 +32,6 @@ airflow connections add 'postgres_default' \
 echo "=========================================="
 echo "✅ Todo listo. Arrancando servidor..."
 echo "=========================================="
+
+# Iniciar el webserver de Airflow
+airflow webserver --port $PORT
