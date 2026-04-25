@@ -133,7 +133,7 @@ def extract_viales(url):
 # CARGA
 # =========================
 def load_viales(data, year):
-    hook = PostgresHook(postgres_conn_id="postgres_viales")
+    hook = PostgresHook(postgres_conn_id="postgres_default")
 
     # Tiempo: Este se queda igual (necesitamos el ID del año)
     id_tiempo = hook.get_first("""
