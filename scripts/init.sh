@@ -32,4 +32,11 @@ airflow connections add 'postgres_default' \
 echo "=========================================="
 echo "✅ Todo listo. Arrancando servidor..."
 echo "=========================================="
-exec airflow webserver --port $PORT
+# Si el comando de inicio de Railway es para el scheduler, ejecutamos el scheduler
+if [[ "$RAILWAY_SERVICE_NAME" == *"scheduler"* ]]; then
+    echo "Iniciando AIRFLOW SCHEDULER..."
+    exec airflow scheduler
+else
+    echo "Iniciando AIRFLOW WEBSERVER en puerto $PORT..."
+    exec airflow webserver --port $PORT
+fi
