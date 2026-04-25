@@ -14,7 +14,7 @@ healthcheckTimeout = 100
 
 [[services]]
 name = "yucatan-scheduler"
-startCommand = "airflow scheduler"
+startCommand = "bash /opt/airflow/scripts/init.sh"
 
 [[services]]
 name = "yucatan-worker"
