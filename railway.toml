@@ -2,7 +2,7 @@
 builder = "dockerfile"
 
 [deploy]
-startCommand = "bash /opt/airflow/scripts/init.sh ; airflow webserver --port $PORT"
+startCommand = "bash /opt/airflow/scripts/init.sh"
 
 [[services]]
 name = "yucatan-web"
