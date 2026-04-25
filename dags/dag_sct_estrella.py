@@ -35,7 +35,7 @@ with DAG(
 
     crear_tablas = PostgresOperator(
         task_id="crear_tablas",
-        postgres_conn_id="postgres_viales",
+        postgres_conn_id="postgres_default",
         sql="""
         CREATE TABLE IF NOT EXISTS dim_ubicacion (
             id_ubicacion SERIAL PRIMARY KEY,
