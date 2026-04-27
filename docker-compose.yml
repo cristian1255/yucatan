@@ -52,11 +52,13 @@ services:
       AIRFLOW_HOME: /opt/airflow
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
       AIRFLOW__CELERY__BROKER_URL: redis://:@redis:6379/0
-      AIRFLOW__CORE__EXECUTOR: SequentialExecutor
+      # CORRECCIÓN 1: Cambiar a CeleryExecutor para que coincida con tus otros servicios
+      AIRFLOW__CORE__EXECUTOR: CeleryExecutor 
       AIRFLOW__CORE__LOAD_EXAMPLES: "false"
       _AIRFLOW_WWW_USER_USERNAME: airflow
       _AIRFLOW_WWW_USER_PASSWORD: airflow
-      AIRFLOW__CORE__TEST_CONNECTION: "Enabled"
+      # CORRECCIÓN 2: Asegúrate de que no tenga espacios extra y prueba sin comillas si el anterior falló
+      AIRFLOW__CORE__TEST_CONNECTION: Enabled
     ports:
       - "8080:8080"
     depends_on:
