@@ -39,7 +39,7 @@ with DAG(
 
     crear_tablas = PostgresOperator(
         task_id="crear_tablas",
-        postgres_conn_id="postgres_datos_viales",
+        postgres_conn_id="postgres_viales",
         execution_timeout=timedelta(minutes=30),
         sql="""
         CREATE TABLE IF NOT EXISTS dim_ubicacion (
