@@ -23,7 +23,7 @@ startCommand = "airflow celery worker"
 [env]
 AIRFLOW_HOME = "/opt/airflow"
 AIRFLOW__CORE__LOAD_EXAMPLES = "False"
-AIRFLOW__CORE__EXECUTOR = "LocalExecutor"
+AIRFLOW__CORE__EXECUTOR = "SequentialExecutor"
 AIRFLOW__CORE__FERNET_KEY = "7X7lR9-5X-W2u8W8x9X_Y7z6W5v4U3t2S1R0PqOnMlKj="
 PYTHONUNBUFFERED = "1"
 PYTHONWARNINGS = "ignore"
