@@ -12,11 +12,12 @@ RUN mkdir -p /opt/airflow/scripts
 # Copiamos los archivos del proyecto
 COPY requirements.txt .
 COPY scripts/init.sh /opt/airflow/scripts/init.sh
+COPY scripts/init_databases.sh /opt/airflow/scripts/init_databases.sh
 COPY dags /opt/airflow/dags
 COPY config /opt/airflow/config
 
 # Aseguramos permisos de ejecución y propiedad
-RUN chmod +x /opt/airflow/scripts/init.sh && \
+RUN chmod +x /opt/airflow/scripts/init.sh /opt/airflow/scripts/init_databases.sh && \
     chown -R airflow:root /opt/airflow
 
 USER airflow
