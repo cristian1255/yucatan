@@ -31,15 +31,18 @@ def ejecutar_ciclo_viales(**kwargs):
 with DAG(
     dag_id="sct_viales_estrella_automatizado",
     # CAMBIO CRÍTICO: "0 0 * * *" ejecuta el proceso todos los días a media noche
-    schedule_interval="0 0 * * *", 
+    schedule_interval="0 0 * * *",
     catchup=False,
     default_args=default_args,
-    tags=["produccion", "sct_yucatan"] # Etiquetas para identificarlo en la UI
+    tags=["produccion", "sct_yucatan"]  # Etiquetas para identificarlo en la UI
 ) as dag:
 
-    crear_tablas = PostgresOperator(
-        task_id="crear_tablas",
+    # --- Tablas de dimensiones (independientes entre sí) ---
+
+    crear_dim_ubicacion = PostgresOperator(
+        task_id="crear_dim_ubicacion",
         postgres_conn_id="postgres_default",
+        execution_timeout=timedelta(seconds=600),
         sql="""
         CREATE TABLE IF NOT EXISTS dim_ubicacion (
             id_ubicacion SERIAL PRIMARY KEY,
@@ -51,17 +54,40 @@ with DAG(
             longitud DECIMAL(10,6),
             UNIQUE(carretera, kilometro, segmento_tramo, latitud, longitud)
         );
+        """
+    )
 
+    crear_dim_vehiculo = PostgresOperator(
+        task_id="crear_dim_vehiculo",
+        postgres_conn_id="postgres_default",
+        execution_timeout=timedelta(seconds=600),
+        sql="""
         CREATE TABLE IF NOT EXISTS dim_vehiculo (
             id_vehiculo SERIAL PRIMARY KEY,
             clasificacion_sct VARCHAR(10) UNIQUE
         );
+        """
+    )
 
+    crear_dim_tiempo = PostgresOperator(
+        task_id="crear_dim_tiempo",
+        postgres_conn_id="postgres_default",
+        execution_timeout=timedelta(seconds=600),
+        sql="""
         CREATE TABLE IF NOT EXISTS dim_tiempo (
             id_tiempo SERIAL PRIMARY KEY,
             anio INTEGER UNIQUE
         );
+        """
+    )
 
+    # --- Tabla de hechos (depende de las tres dimensiones) ---
+
+    crear_fact_movilidad = PostgresOperator(
+        task_id="crear_fact_movilidad",
+        postgres_conn_id="postgres_default",
+        execution_timeout=timedelta(seconds=600),
+        sql="""
         CREATE TABLE IF NOT EXISTS fact_movilidad (
             id_hecho SERIAL PRIMARY KEY,
             id_ubicacion INTEGER REFERENCES dim_ubicacion(id_ubicacion),
@@ -77,7 +103,9 @@ with DAG(
     proceso_etl_completo = PythonOperator(
         task_id="ejecutar_scraper_y_carga",
         python_callable=ejecutar_ciclo_viales,
-        provide_context=True # Recomendado para pasar parámetros del sistema
+        provide_context=True  # Recomendado para pasar parámetros del sistema
     )
 
-    crear_tablas >> proceso_etl_completo
+    # Las dimensiones se crean en paralelo; fact_movilidad espera a las tres;
+    # el ETL arranca sólo cuando el esquema estrella está completo.
+    [crear_dim_ubicacion, crear_dim_vehiculo, crear_dim_tiempo] >> crear_fact_movilidad >> proceso_etl_completo
