@@ -6,12 +6,10 @@ echo "🚀 Iniciando Preparación de Airflow..."
 echo "=========================================="
 
 # 1. Migrar base de datos de Airflow
-# Esto asegura que las tablas internas del sistema estén listas
 echo "Ejecutando db migrate..."
 airflow db migrate
 
 # 2. Crear usuario admin
-# Solo lo intenta si no existe; si ya existe, continúa sin error
 echo "Verificando usuario administrador..."
 airflow users create \
   --username admin \
@@ -26,11 +24,13 @@ echo "✅ Preparación lista. Detectando servicio..."
 echo "=========================================="
 
 # 3. Selector de Servicio
-# Esto permite que el mismo archivo sirva para Webserver y Scheduler
 if [[ "$RAILWAY_SERVICE_NAME" == *"scheduler"* ]]; then
-    echo "Iniciando AIRFLOW SCHEDULER..."
-    exec airflow scheduler
+  echo "Iniciando AIRFLOW SCHEDULER..."
+  exec airflow scheduler
+elif [[ "$RAILWAY_SERVICE_NAME" == *"worker"* ]]; then
+  echo "Iniciando CELERY WORKER..."
+  exec celery -A airflow.executors.celery_executor worker --loglevel=info
 else
-    echo "Iniciando AIRFLOW WEBSERVER en puerto $PORT..."
-    exec airflow webserver --port $PORT
+  echo "Iniciando AIRFLOW WEBSERVER en puerto $PORT..."
+  exec airflow webserver --port $PORT
 fi
