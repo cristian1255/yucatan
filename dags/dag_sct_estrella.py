@@ -51,7 +51,7 @@ def ejecutar_ciclo_viales(**kwargs):
 
 with DAG(
     dag_id="sct_transito_snowflake_automatizado",
-    schedule_interval=None,
+    schedule_interval='0 2 * * 1',
     catchup=False,
     default_args=default_args
 ) as dag:
