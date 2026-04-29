@@ -33,12 +33,12 @@ echo "=========================================="
 echo "✅ Todo listo. Arrancando servidor..."
 echo "=========================================="
 
-# 3. Selector de Servicio
-# Esto permite que el mismo archivo sirva para Webserver y Scheduler
 if [[ "$RAILWAY_SERVICE_NAME" == *"scheduler"* ]]; then
     echo "Iniciando AIRFLOW SCHEDULER..."
     exec airflow scheduler
 else
-    echo "Iniciando AIRFLOW WEBSERVER en puerto $PORT..."
-    exec airflow webserver --port $PORT
+    # Si $PORT está vacío, usa 8080 por defecto
+    WEB_PORT="${PORT:-8080}"
+    echo "Iniciando AIRFLOW WEBSERVER en puerto $WEB_PORT..."
+    exec airflow webserver --port "$WEB_PORT"
 fi
