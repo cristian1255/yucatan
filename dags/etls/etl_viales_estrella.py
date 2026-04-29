@@ -1,203 +1,80 @@
-import pdfplumber
 import requests
-import tempfile
-import re
+from bs4 import BeautifulSoup
 import logging
-from airflow.providers.postgres.hooks.postgres import PostgresHook
 
 logger = logging.getLogger("airflow.task")
 
+def obtener_urls_sct():
+    BASE = "https://micrs.sct.gob.mx"
+    URL_RAIZ = BASE + "/index.php/infraestructura/direccion-general-de-servicios-tecnicos/datos-viales"
 
-# =========================
-# LIMPIEZA
-# =========================
-def clean_text(val):
-    if not val:
-        return ""
-    return str(val).replace("\n", " ").strip()
+    resultados = []
 
-# =========================
-# EXTRAER RUTA DESDE CLAVE
-# =========================
-def extraer_ruta(texto):
-    if not texto:
-        return None
+    try:
+        # 1. Obtener la página principal
+        res = requests.get(URL_RAIZ, verify=False, timeout=30)
+        res.raise_for_status()
+        soup = BeautifulSoup(res.text, "html.parser")
 
-    match = re.search(r'RUTA\s*:\s*([A-Z0-9\-]+)', texto)
+        # ---------------------------------------------------------
+        # 2. OBTENER Y ORDENAR AÑOS (Dinámico)
+        # ---------------------------------------------------------
+        anios_encontrados = []
+        
+        # Buscamos todos los enlaces que parezcan años (que contengan datos-viales/20)
+        for a in soup.select("a[href*='datos-viales/20']"):
+            texto = a.text.strip()
+            if texto.isdigit():
+                href = a.get("href")
+                url_completa = BASE + href if href.startswith("/") else href
+                anios_encontrados.append((int(texto), url_completa))
 
-    if match:
-        return match.group(1).strip()
+        # Ordenamos de mayor a menor para asegurar que los primeros sean los más nuevos
+        anios_encontrados.sort(key=lambda x: x[0], reverse=True)
 
-    return None
-# =========================
-# EXTRAER HEADER (RUTA Y CARRETERA)
-# =========================
-def extract_header_info(text):
-    ruta = None
-    carretera = None
+        # Seleccionamos los últimos 10 años disponibles en la página
+        ultimos_10_anios = anios_encontrados[:10]
+        
+        logger.info(f"Se encontraron {len(anios_encontrados)} años. Procesando los {len(ultimos_10_anios)} más recientes.")
 
-    # Normalizar texto fuerte
-    text = re.sub(r"\s+", " ", text)
+        # ---------------------------------------------------------
+        # 3. NAVEGAR EN CADA AÑO
+        # ---------------------------------------------------------
+        for year, url_anio in ultimos_10_anios:
+            logger.info(f"📅 Escaneando año: {year}")
 
-    # =========================
-    # CARRETERA
-    # =========================
-    carretera_match = re.search(r"CARR:\s*(.*?)\s*CLAVE:", text)
-    if carretera_match:
-        carretera = carretera_match.group(1).strip()
+            try:
+                res_anio = requests.get(url_anio, verify=False, timeout=30)
+                soup_anio = BeautifulSoup(res_anio.text, "html.parser")
 
-    # =========================
-    # RUTA (FORMA ROBUSTA)
-    # =========================
-    ruta = extraer_ruta(text)
+                # Buscamos el PDF de Yucatán
+                # Buscamos tanto en la clase 'download' como en cualquier link que diga 'yucat'
+                links = soup_anio.find_all("a", href=True)
+                
+                encontrado = False
+                for a in links:
+                    nombre_link = a.text.lower()
+                    url_pdf = a.get("href")
 
-    return ruta, carretera
+                    if "yucat" in nombre_link and ".pdf" in url_pdf.lower():
+                        link_final = BASE + url_pdf if url_pdf.startswith("/") else url_pdf
+                        
+                        resultados.append({
+                            "year": year,
+                            "url": link_final
+                        })
+                        logger.info(f"✅ Enlace Yucatán {year} detectado: {link_final}")
+                        encontrado = True
+                        break 
+                
+                if not encontrado:
+                    logger.warning(f"⚠️ No se encontró PDF de Yucatán para el año {year}")
 
-# =========================
-# EXTRACCIÓN
-# =========================
-def extract_viales(url):
-    logger.info(f"Descargando PDF: {url}")
+            except Exception as e:
+                logger.error(f"❌ Error al procesar el año {year}: {e}")
+                continue
 
-    response = requests.get(url, verify=False)
+    except Exception as e:
+        logger.error(f"❌ Error general en el scraper: {e}")
 
-    data = []
-
-    with tempfile.NamedTemporaryFile(suffix=".pdf") as tmp:
-        tmp.write(response.content)
-        tmp.flush()
-
-        with pdfplumber.open(tmp.name) as pdf:
-
-            ruta = None
-            carretera = None
-
-            for page in pdf.pages:
-                text = page.extract_text()
-
-                if not text:
-                    continue
-
-                # Header
-                r, c = extract_header_info(text)
-                if r:
-                    ruta = r
-                if c:
-                    carretera = c
-
-                lines = text.split("\n")
-
-                for line in lines:
-                    line = re.sub(r"\s+", " ", line).strip()
-
-                    match = re.match(
-                        r"(.+?)\s+(\d+\.\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+([\d\.]+)\s+([\d\.]+)\s+([\d\.]+)\s+([\d\.]+)\s+([\d\.]+)\s+([\d\.]+)\s+([\d\.]+)\s+([\d\.]+)\s+([\d\.]+)\s+([\d\.]+)\s+([\d\.]+)\s+([\d\.]+)\s+([\d\.]+)\s+([\d\.]+)\s+([-]?\d+\.\d+)\s+([-]?\d+\.\d+)",
-                        line
-                    )
-
-                    if not match:
-                        continue
-
-                    try:
-                        registro = {
-                            "ruta": ruta,
-                            "carretera": carretera,
-                            "segmento": match.group(1),
-
-                            "km": float(match.group(2)),
-                            "tdpa": int(match.group(5)),
-
-                            "A": float(match.group(7)),
-                            "B": float(match.group(8)),
-                            "C2": float(match.group(9)),
-                            "C3": float(match.group(10)),
-                            "T3S2": float(match.group(11)),
-                            "T3S3": float(match.group(12)),
-                            "OTROS": float(match.group(13)),
-
-                            "lat": float(match.group(20)),
-                            "lon": float(match.group(21))
-                        }
-
-                        data.append(registro)
-
-                    except Exception as e:
-                        logger.warning(f"Error parseando línea: {line}")
-                        continue
-
-    logger.info(f"Filas extraídas: {len(data)}")
-    return data
-
-
-# =========================
-# CARGA
-# =========================
-def load_viales(data, year):
-    hook = PostgresHook(postgres_conn_id="postgres_viales")
-
-    # Tiempo: Este se queda igual (necesitamos el ID del año)
-    id_tiempo = hook.get_first("""
-        INSERT INTO dim_tiempo (anio)
-        VALUES (%s)
-        ON CONFLICT (anio)
-        DO UPDATE SET anio = EXCLUDED.anio
-        RETURNING id_tiempo;
-    """, (year,))[0]
-
-    for row in data:
-        try:
-            # =========================
-            # UBICACION (INSERT DIRECTO)
-            # =========================
-            # Como ya NO EXISTE la restricción UNIQUE en la DB, 
-            # este INSERT aceptará todo, incluso si la carretera/km se repiten.
-            id_ubicacion = hook.get_first("""
-                INSERT INTO dim_ubicacion (
-                    ruta, carretera, segmento_tramo, kilometro, latitud, longitud
-                )
-                VALUES (%s, %s, %s, %s, %s, %s)
-                RETURNING id_ubicacion;
-            """, (
-                row["ruta"],
-                row["carretera"],
-                row["segmento"],
-                row["km"],
-                row["lat"],
-                row["lon"]
-            ))[0]
-
-            # =========================
-            # VEHICULOS + FACT
-            # =========================
-            for clasif in ["A", "B", "C2", "C3", "T3S2", "T3S3", "OTROS"]:
-
-                id_vehiculo = hook.get_first("""
-                    INSERT INTO dim_vehiculo (clasificacion_sct)
-                    VALUES (%s)
-                    ON CONFLICT (clasificacion_sct)
-                    DO UPDATE SET clasificacion_sct = EXCLUDED.clasificacion_sct
-                    RETURNING id_vehiculo;
-                """, (clasif,))[0]
-
-                # Insertamos en la tabla de hechos usando el ID único de esta ubicación
-                hook.run("""
-                    INSERT INTO fact_movilidad
-                    (
-                        id_ubicacion,
-                        id_vehiculo,
-                        id_tiempo,
-                        cantidad_vehiculos_tdpa,
-                        porcentaje_composicion
-                    )
-                    VALUES (%s, %s, %s, %s, %s)
-                """, parameters=(
-                    id_ubicacion,
-                    id_vehiculo,
-                    id_tiempo,
-                    row["tdpa"],
-                    row[clasif]
-                ))
-
-        except Exception as e:
-            logger.error(f"Fallo en fila {row.get('segmento')} (KM {row.get('km')}): {e}")
-            continue
+    return resultados
