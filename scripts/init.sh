@@ -40,5 +40,5 @@ if [[ "$RAILWAY_SERVICE_NAME" == *"scheduler"* ]]; then
     exec airflow scheduler
 else
     echo "Iniciando AIRFLOW WEBSERVER en puerto $PORT..."
-    exec airflow webserver --port $PORT
+    exec airflow webserver --port $PORT --workers 2
 fi
