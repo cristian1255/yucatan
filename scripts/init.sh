@@ -1,52 +1,42 @@
 #!/bin/bash
+
 set -e
 
 echo "=========================================="
-echo "🚀 Iniciando Preparación de Airflow..."
+echo "Inicializando Airflow..."
 echo "=========================================="
 
-# 1. Ajuste para compatibilidad con GitHub Actions (Evita error de SQLite + Celery)
-# Si no hay una base de datos externa configurada, forzamos SequentialExecutor
-if [[ -z "$AIRFLOW__DATABASE__SQL_ALCHEMY_CONN" || "$AIRFLOW__DATABASE__SQL_ALCHEMY_CONN" == *"sqlite"* ]]; then
-    echo "⚠️ Detectado entorno local/test. Usando SequentialExecutor para compatibilidad..."
-    export AIRFLOW__CORE__EXECUTOR=SequentialExecutor
-fi
+# Inicializar base de datos
+echo "1. Inicializando base de datos..."
+airflow db init
 
-# 2. Migrar base de datos
-echo "Ejecutando db migrate..."
-airflow db migrate
-
-# 3. Crear usuario admin
-echo "Verificando usuario administrador..."
+# Crear usuario admin
+echo "2. Creando usuario admin..."
 airflow users create \
   --username admin \
   --password admin \
   --firstname Admin \
   --lastname User \
   --role Admin \
-  --email admin@example.org || echo "⚠️ El usuario ya existe o no se pudo crear."
+  2>/dev/null || echo "Usuario ya existe"
 
-# 4. Configurar conexión predeterminada
-# Usamos variables con valores por defecto para que no falle si no están presentes
-echo "Configurando conexión postgres_default..."
+# Crear conexión PostgreSQL por defecto
+echo "3. Creando conexión PostgreSQL..."
 airflow connections add 'postgres_default' \
   --conn-type 'postgres' \
-  --conn-login "${POSTGRES_USER:-postgres}" \
-  --conn-host "${POSTGRES_HOST:-postgres.railway.internal}" \
-  --conn-port "${POSTGRES_PORT:-5432}" \
-  --conn-schema "${POSTGRES_DB:-railway}" \
-  --conn-password "${POSTGRES_PASSWORD}" || echo "⚠️ La conexión ya existe o faltan variables."
+  --conn-login 'airflow' \
+  --conn-password 'airflow' \
+  --conn-host 'postgres' \
+  --conn-port '5432' \
+  --conn-schema 'airflow' \
+  2>/dev/null || echo "Conexión ya existe"
 
 echo "=========================================="
-echo "✅ Todo listo. Arrancando servidor..."
+echo "✅ Inicialización completada"
 echo "=========================================="
-
-if [[ "$RAILWAY_SERVICE_NAME" == *"scheduler"* ]]; then
-    echo "Iniciando AIRFLOW SCHEDULER..."
-    exec airflow scheduler
-else
-    # Si $PORT está vacío, usa 8080 por defecto (evita error de argumento vacío)
-    WEB_PORT="${PORT:-8080}"
-    echo "Iniciando AIRFLOW WEBSERVER en puerto $WEB_PORT..."
-    exec airflow webserver --port "$WEB_PORT"
-fi
+echo ""
+echo "Accede a Airflow:"
+echo "  URL: http://localhost:8080"
+echo "  Usuario: admin"
+echo "  Contraseña: admin"
+echo ""
