@@ -17,10 +17,11 @@ default_args = {
 def crear_db_transito(**kwargs):
     """
     Crea la base de datos 'transito' si no existe.
-    Se conecta a la DB 'railway' (postgres_default) porque CREATE DATABASE
-    no puede ejecutarse dentro de una transacción; se requiere autocommit.
+    Se conecta a la DB 'railway' usando la conexión 'postgres_transito' porque
+    CREATE DATABASE no puede ejecutarse dentro de una transacción; se requiere
+    autocommit.
     """
-    hook = PostgresHook(postgres_conn_id="postgres_default")
+    hook = PostgresHook(postgres_conn_id="postgres_transito")
     conn = hook.get_conn()
     conn.autocommit = True
     cursor = conn.cursor()
