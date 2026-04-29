@@ -2,6 +2,7 @@ from datetime import datetime
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.providers.postgres.operators.postgres import PostgresOperator
+from airflow.providers.postgres.hooks.postgres import PostgresHook
 
 # IMPORTAMOS EL SCRAPER Y EL PIPELINE
 from pipelines.viales_scraper import obtener_urls_sct
@@ -12,6 +13,28 @@ default_args = {
     "start_date": datetime(2026, 3, 20),
     "retries": 0
 }
+
+def crear_db_transito(**kwargs):
+    """
+    Crea la base de datos 'transito' si no existe.
+    Se conecta a la DB 'railway' (postgres_default) porque CREATE DATABASE
+    no puede ejecutarse dentro de una transacción; se requiere autocommit.
+    """
+    hook = PostgresHook(postgres_conn_id="postgres_default")
+    conn = hook.get_conn()
+    conn.autocommit = True
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT 1 FROM pg_database WHERE datname = 'transito';"
+    )
+    if not cursor.fetchone():
+        cursor.execute("CREATE DATABASE transito;")
+        print("Base de datos 'transito' creada exitosamente.")
+    else:
+        print("La base de datos 'transito' ya existe. No se requiere acción.")
+    cursor.close()
+    conn.close()
+
 
 def ejecutar_ciclo_viales(**kwargs):
     """
@@ -31,6 +54,12 @@ with DAG(
     catchup=False,
     default_args=default_args
 ) as dag:
+
+    # PASO PREVIO: Asegurar que la base de datos 'transito' existe
+    crear_base_datos_transito = PythonOperator(
+        task_id="crear_base_datos_transito",
+        python_callable=crear_db_transito
+    )
 
     # IMPLEMENTACIÓN DE MODELO COPO DE NIEVE
     crear_tablas_snowflake = PostgresOperator(
@@ -91,4 +120,4 @@ with DAG(
         python_callable=ejecutar_ciclo_viales
     )
 
-    crear_tablas_snowflake >> proceso_etl_completo
+    crear_base_datos_transito >> crear_tablas_snowflake >> proceso_etl_completo
