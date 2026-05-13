@@ -1,17 +1,9 @@
-# Airflow Core
 apache-airflow==2.9.1
 apache-airflow-providers-postgres==5.10.0
 apache-airflow-providers-celery==3.7.0
 apache-airflow-providers-redis==3.4.0
 
-# Parches de compatibilidad para Python 3.12 (CRÍTICO)
-# Esto soluciona el error: "can't compare offset-naive and offset-aware datetimes"
-Flask-Session==0.8.0
-Flask-AppBuilder==4.5.0
-Flask>=2.2.5
-Werkzeug>=2.3.3
-
-# Celery y Redis
+# Celery
 celery[redis]==5.3.4
 redis==4.6.0
 
@@ -19,14 +11,16 @@ redis==4.6.0
 psycopg2-binary==2.9.9
 SQLAlchemy==1.4.52
 
-# Web scraping (Tus herramientas de extracción)
+# Web scraping
 requests==2.31.0
 beautifulsoup4==4.12.2
 lxml==4.9.3
 html5lib==1.1
+
+# PDF
 pdfplumber==0.10.3
 
-# Data Science
+# Data (🔥 versiones compatibles)
 pandas==2.1.4
 numpy==1.26.4
 
